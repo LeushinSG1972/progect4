@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedural Sphere with Three.js</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(95, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Orbit controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Position camera
+        camera.position.z = 5;
+
+        // Function to create a sphere with procedural texture
+        function pr(x, y, z, r) {
+            // Create sphere geometry
+            const geometry = new THREE.SphereGeometry(r, 64, 64);
+            
+            // Create procedural texture
+            const texture = new THREE.DataTexture(
+                createProceduralTexture(256, 256),
+                256, 256,
+                THREE.RGBFormat
+            );
+            texture.needsUpdate = true;
+            
+            // Create material with the texture
+            const material = new THREE.MeshPhongMaterial({
+                map: texture,
+                shininess: 30,
+                side: THREE.DoubleSide
+            });
+            
+            // Create mesh
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(x, y, z);
+            scene.add(sphere);
+            
+            return sphere;
+        }
+
+        // Function to generate procedural texture data
+        function createProceduralTexture(width, height) {
+            const size = width * height * 3;
+            const data = new Uint8Array(size);
+            
+            for (let i = 0; i < size; i += 3) {
+                const x = (i / 3) % width;
+                const y = Math.floor((i / 3) / width);
+                
+                // Simple procedural pattern (you can customize this)
+                const value = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 127 + 128;
+                const noise = Math.random() * 50;
+                
+                data[i] = value + noise;     // R
+                data[i + 1] = value * 0.7;    // G
+                data[i + 2] = value * 0.3;    // B
+            }
+            
+            return data;
+        }
+
+        // Example usage
+        pr(0, 0, 0, 0.8); 
+pr(0,0,2,1);    pr(0,0,-2,1);   pr(0,2,0,1);   pr(0,-2,0,1);
+  pr(2,0,0,1);    pr(-2,0,0,1); 
+
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
